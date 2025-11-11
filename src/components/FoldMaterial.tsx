@@ -46,15 +46,15 @@ const vertexShader = `
   void main() {
     vUv = uv;
     vec3 pos = position; // 원본 정점 위치 (y: -0.5 ~ 0.5)
-
     float centerOffset = uPlaneSize * 0.5; // Y축의 중앙 오프셋 (0.5)
+
+    float curlRadius = 0.9;  // 접히는 반경 (클수록 많이 접힘)
 
     // 스크롤 진행도에 따라 curl 파라미터 조절
     float curlAmount = abs(uDistance); // 0.0 ~ 1.0 (스크롤이 멀어질수록 커짐)
     float easedAmount = easeOutCubic(curlAmount); 
-    
-    float curlRadius = 0.9;  // 접히는 반경 (클수록 많이 접힘)
-    float curlOffset = mix(0.0, 1.9, easedAmount);  // 접힘 시작점 (0.0=끝, 1.0=중앙)
+    float easeInAmount = pow(easedAmount, 2.5);
+    float curlOffset = mix(0.0, 1.9, easeInAmount);  // 접힘 시작점 (0.0=끝, 1.0=중앙)
 
     // 접히는 방향 (filp) 로직 반전
     // uDistance < 0 (위로 스크롤) => 아래쪽 접힘
@@ -87,7 +87,6 @@ const fragmentShader = `
     gl_FragColor = texture2D(uTexture, vUv);
   }
 `;
-
 const FoldMaterial = shaderMaterial(
   {
     uDistance: 0.0,
@@ -98,18 +97,13 @@ const FoldMaterial = shaderMaterial(
   fragmentShader
 );
 
+extend({ FoldMaterial });
+
 export type FoldMaterialType = typeof FoldMaterial & {
   uDistance: number;
   uTexture: THREE.Texture;
   uPlaneSize: number;
 } & THREE.ShaderMaterial;
-
-extend({ FoldMaterial });
-
-FoldMaterial.prototype.side = THREE.DoubleSide;
-FoldMaterial.prototype.transparent = false;
-
-export default FoldMaterial;
 
 declare module '@react-three/fiber' {
   interface ThreeElements {
@@ -117,6 +111,10 @@ declare module '@react-three/fiber' {
       uDistance?: number;
       uTexture?: THREE.Texture;
       uPlaneSize?: number;
+      side?: THREE.Side;
+      transparent?: boolean;
     };
   }
 }
+
+export default FoldMaterial;

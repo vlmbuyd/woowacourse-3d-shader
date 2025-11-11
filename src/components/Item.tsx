@@ -42,6 +42,7 @@ export function Item({ index, texture, totalItems, isInfinite }: ItemProps) {
   const { height: viewportHeight } = useThree((state) => state.viewport);
   const data = useScroll();
 
+  const positionMultiplier = 0.6; // 아이템 간의 간격
   const halfItems = totalItems / 2;
   let initialDistance = index - 0; // index - scrollProgress(초기값 0)
 
@@ -49,7 +50,7 @@ export function Item({ index, texture, totalItems, isInfinite }: ItemProps) {
   if (isInfinite && initialDistance > halfItems) {
     initialDistance = initialDistance - totalItems;
   }
-  const initialY = -initialDistance * viewportHeight; // 첫 렌더링 시 위치 (튕김 현상 방지)
+  const initialY = -initialDistance * viewportHeight * positionMultiplier; // 첫 렌더링 시 위치 (튕김 현상 방지)
 
   useFrame((_, delta) => {
     if (!groupRef.current || !materialRef.current) return;
@@ -84,12 +85,12 @@ export function Item({ index, texture, totalItems, isInfinite }: ItemProps) {
 
     groupRef.current.position.y = THREE.MathUtils.damp(
       groupRef.current.position.y,
-      -distance * viewportHeight,
+      -distance * viewportHeight * positionMultiplier,
       positionDamp,
       delta
     );
 
-    const targetRotationZ = -distance * THREE.MathUtils.degToRad(40);
+    const targetRotationZ = -distance * THREE.MathUtils.degToRad(35);
     groupRef.current.rotation.z = THREE.MathUtils.damp(
       groupRef.current.rotation.z,
       targetRotationZ,
@@ -102,13 +103,13 @@ export function Item({ index, texture, totalItems, isInfinite }: ItemProps) {
 
   return (
     <group ref={groupRef} position={[0, initialY, 0]}>
-      <mesh rotation={[0, Math.PI, 0]} scale={[520, 520, 1]}>
+      <mesh scale={[520, 520, 1]}>
         <planeGeometry args={[1, 1, 64, 64]} />
 
         <foldMaterial
           ref={materialRef}
           uTexture={texture}
-          side={THREE.DoubleSide}
+          side={THREE.FrontSide}
           transparent={false}
         />
       </mesh>

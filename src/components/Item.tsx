@@ -109,7 +109,7 @@ export function Item({ index, texture, totalItems, isInfinite }: ItemProps) {
         <foldMaterial
           ref={materialRef}
           uTexture={texture}
-          side={THREE.FrontSide}
+          side={THREE.DoubleSide}
           transparent={false}
         />
       </mesh>

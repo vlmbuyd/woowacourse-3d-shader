@@ -48,13 +48,12 @@ const vertexShader = `
     vec3 pos = position; // 원본 정점 위치 (y: -0.5 ~ 0.5)
     float centerOffset = uPlaneSize * 0.5; // Y축의 중앙 오프셋 (0.5)
 
-    float curlRadius = 0.9;  // 접히는 반경 (클수록 많이 접힘)
+    float curlRadius = 1.4;  // 접히는 반경 (클수록 많이 접힘)
 
     // 스크롤 진행도에 따라 curl 파라미터 조절
     float curlAmount = abs(uDistance); // 0.0 ~ 1.0 (스크롤이 멀어질수록 커짐)
     float easedAmount = easeOutCubic(curlAmount); 
-    float easeInAmount = pow(easedAmount, 2.5);
-    float curlOffset = mix(0.0, 1.9, easeInAmount);  // 접힘 시작점 (0.0=끝, 1.0=중앙)
+    float curlOffset = mix(0.0, 1.5, easedAmount);  // 접힘 시작점 (0.0=끝, 1.0=중앙)
 
     // 접히는 방향 (filp) 로직 반전
     // uDistance < 0 (위로 스크롤) => 아래쪽 접힘
@@ -70,10 +69,13 @@ const vertexShader = `
       flipCurl                  // 접히는 방향 (flip)
     );
 
+    // 사다리꼴 효과: 원근법에 따라 접힌 부분이 더 넓어지도록
+    float fanAmount = 0.3;  // 클수록 더 넓어짐
+    pos.x *= (1.0 + curledPosition.y * fanAmount);
+    
     // 변형된 Y, Z 좌표를 pos에 적용
-    pos.y = curledPosition.x - centerOffset; // curledPosition.x가 새 Y 좌표
-    pos.z -= curledPosition.y;               // curledPosition.y가 새 Z 좌표 (깊이)
-
+    pos.y = curledPosition.x - centerOffset; // 새 Y 좌표 적용
+    pos.z += curledPosition.y;               // 새 Z 좌표(깊이) 적용
 
     gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
   }
@@ -82,7 +84,7 @@ const vertexShader = `
 const fragmentShader = `
   varying vec2 vUv;
   uniform sampler2D uTexture;
-
+  
   void main() {
     gl_FragColor = texture2D(uTexture, vUv);
   }
